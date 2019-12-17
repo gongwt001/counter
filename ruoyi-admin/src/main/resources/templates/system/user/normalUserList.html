@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+	<th:block th:include="include :: header('正常用户列表')" />
+</head>
+<body class="gray-bg">
+     <div class="container-div">
+		<div class="row">
+		     <div class="col-sm-12 search-collapse">
+                <form id="formId">
+                    <div class="select-list">
+                        <ul>
+                            <li>
+                                <p>姓名：</p>
+                                <input type="text" name="userName"/>
+                            </li>
+                            <li>
+                                <p>状态：</p>
+                                <select name="status" th:with="type=${@dict.getType('sys_record_status')}">
+                                    <option th:each="dict : ${type}" th:text="${dict.dictLabel}" th:value="${dict.dictValue}"></option>
+                                    <option value="">所有</option>
+                                </select>
+                            </li>
+                            <li>                                
+                                <a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()"><i class="fa fa-search"></i>&nbsp;搜索</a>
+                                <a class="btn btn-warning btn-rounded btn-sm" onclick="$.form.reset()"><i class="fa fa-refresh"></i>&nbsp;重置</a>                              
+                            </li>
+                        </ul>
+                    </div>
+                </form>
+            </div>
+			<div class="col-sm-12 select-table table-striped">
+				<table id="bootstrap-table-userList"></table>
+			</div>
+		</div>
+	</div>
+    <div th:include="include :: footer"></div>
+    <script th:inline="javascript">
+        var prefix = ctx + "system/user";
+        var datas = [[${@dict.getType('sys_normal_disable')}]];
+
+        $(function() {debugger
+            var options = {
+        		id: 'bootstrap-table-userList',
+                url: prefix + '/list',
+		        showSearch: true,
+		        showRefresh: false,
+		        showToggle: true,
+		        showColumns: true,
+		        cache: false,
+		        clickToSelect:true,
+		        onClickRow: onClickRow,//开启单击时间监听 
+		        onCheck: onCheck,//开启单选框事件监听
+		        singleSelect : true,//禁止多选
+		        pagination : true,
+                columns: [{
+		            checkbox: true
+		        },
+				{
+					field : 'userId', 
+					title : '用户ID'
+				},
+				{
+					field : 'userName', 
+					title : '用户姓名'
+				},
+				{
+                    field: 'status',
+                    title: '用户状态',
+                    align: 'center',
+                    formatter: function(value, row, index) {
+                    	return $.table.selectDictLabel(datas, value);
+                    }
+                }]
+            };
+            $.table.init(options);
+        });
+        
+        function onClickRow(row, $element){
+        	console.log("单击行 userId：" + row.userId + " userName：" + row.userName);
+            return row.userName;
+        }
+        
+        function onCheck(row){
+        	console.log("单击单选框 userId：" + row.userId + " userName：" + row.userName);
+        	if(!window.localStorage){
+        	    alert("浏览器不支持localstorage");
+        	    return false;
+        	}else{
+        		var storage=window.localStorage;
+        		storage.userName = row.userName;
+        	}
+        }       
+       
+    </script>
+</body>
+</html>

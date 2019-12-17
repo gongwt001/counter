@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.SysProjectMapper">
+
+	<resultMap type="SysProject" id="SysProjectResult">
+		<id     property="projectId"     column="project_id"     />
+		<result property="parentId"   column="parent_id"   />
+		<result property="ancestors"  column="ancestors"   />
+		<result property="projectName"   column="project_name"   />
+		<result property="orderNum"   column="order_num"   />
+		<result property="leader"     column="leader"      />
+		<result property="phone"      column="phone"       />
+		<result property="email"      column="email"       />
+		<result property="status"     column="status"      />
+		<result property="delFlag"    column="del_flag"    />
+		<result property="parentName" column="parent_name" />
+		<result property="createBy"   column="create_by"   />
+		<result property="createTime" column="create_time" />
+		<result property="updateBy"   column="update_by"   />
+		<result property="updateTime" column="update_time" />
+	</resultMap>
+	
+	<sql id="selectProjectVo">
+        select d.project_id, d.parent_id, d.ancestors, d.project_name, d.order_num, d.leader, d.phone, d.email, d.status, d.del_flag, d.create_by, d.create_time 
+        from sys_project d
+    </sql>
+    
+	<select id="selectRoleProjectTree" parameterType="Long" resultType="String">
+		select concat(d.project_id, d.project_name) as project_name
+		from sys_project d
+			left join sys_role_project rd on d.project_id = rd.project_id
+		where d.del_flag = '0' and rd.role_id = #{roleId}
+		order by d.parent_id, d.order_num
+	</select>
+	
+	<select id="selectProjectList" parameterType="SysProject" resultMap="SysProjectResult">
+        <include refid="selectProjectVo"/>
+        where d.del_flag = '0'
+        <if test="parentId != null and parentId != 0">
+			AND parent_id = #{parentId}
+		</if>
+		<if test="projectName != null and projectName != ''">
+			AND project_name like concat('%', #{projectName}, '%')
+		</if>
+		<if test="status != null and status != ''">
+			AND status = #{status}
+		</if>
+		<!-- 数据范围过滤 -->
+		${params.dataScope}
+		order by d.parent_id, d.order_num
+    </select>
+	
+	<select id="checkProjectExistUser" parameterType="Long" resultType="int">
+		select count(1) from sys_user where project_id = #{projectId} and del_flag = '0'
+	</select>
+	
+	<select id="selectProjectCount" parameterType="SysProject" resultType="int">
+		select count(1) from sys_project
+		where del_flag = '0'
+		<if test="projectId != null and projectId != 0"> and project_id = #{projectId} </if>
+		<if test="parentId != null and parentId != 0"> and parent_id = #{parentId} </if>
+	</select>
+	
+	<select id="checkProjectNameUnique" resultMap="SysProjectResult">
+	    <include refid="selectProjectVo"/>
+		where project_name=#{projectName} and parent_id = #{parentId}
+	</select>
+
+	<select id="selectProjectById" parameterType="Long" resultMap="SysProjectResult">
+		select d.project_id, d.parent_id, d.ancestors, d.project_name, d.order_num, d.leader, d.phone, d.email, d.status,
+			(select project_name from sys_project where project_id = d.parent_id) parent_name
+		from sys_project d
+		where d.project_id = #{projectId}
+	</select>
+
+	<select id="selectChildrenProjectById" parameterType="Long" resultMap="SysProjectResult">
+		select * from sys_project where find_in_set(#{projectId}, ancestors)
+	</select>
+	
+	<insert id="insertProject" parameterType="SysProject">
+ 		insert into sys_project(
+ 			<if test="projectId != null and projectId != 0">project_id,</if>
+ 			<if test="parentId != null and parentId != 0">parent_id,</if>
+ 			<if test="projectName != null and projectName != ''">project_name,</if>
+ 			<if test="ancestors != null and ancestors != ''">ancestors,</if>
+ 			<if test="orderNum != null and orderNum != ''">order_num,</if>
+ 			<if test="leader != null and leader != ''">leader,</if>
+ 			<if test="phone != null and phone != ''">phone,</if>
+ 			<if test="email != null and email != ''">email,</if>
+ 			<if test="status != null">status,</if>
+ 			<if test="createBy != null and createBy != ''">create_by,</if>
+ 			create_time
+ 		)values(
+ 			<if test="projectId != null and projectId != 0">#{projectId},</if>
+ 			<if test="parentId != null and parentId != 0">#{parentId},</if>
+ 			<if test="projectName != null and projectName != ''">#{projectName},</if>
+ 			<if test="ancestors != null and ancestors != ''">#{ancestors},</if>
+ 			<if test="orderNum != null and orderNum != ''">#{orderNum},</if>
+ 			<if test="leader != null and leader != ''">#{leader},</if>
+ 			<if test="phone != null and phone != ''">#{phone},</if>
+ 			<if test="email != null and email != ''">#{email},</if>
+ 			<if test="status != null">#{status},</if>
+ 			<if test="createBy != null and createBy != ''">#{createBy},</if>
+ 			sysdate()
+ 		)
+	</insert>
+	
+	<update id="updateProject" parameterType="SysProject">
+ 		update sys_project
+ 		<set>
+ 			<if test="parentId != null and parentId != 0">parent_id = #{parentId},</if>
+ 			<if test="projectName != null and projectName != ''">project_name = #{projectName},</if>
+ 			<if test="ancestors != null and ancestors != ''">ancestors = #{ancestors},</if>
+ 			<if test="orderNum != null and orderNum != ''">order_num = #{orderNum},</if>
+ 			<if test="leader != null">leader = #{leader},</if>
+ 			<if test="phone != null">phone = #{phone},</if>
+ 			<if test="email != null">email = #{email},</if>
+ 			<if test="status != null and status != ''">status = #{status},</if>
+ 			<if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+ 			update_time = sysdate()
+ 		</set>
+ 		where project_id = #{projectId}
+	</update>
+	
+	<update id="updateProjectChildren" parameterType="java.util.List">
+	    update sys_project set ancestors =
+	    <foreach collection="projects" item="item" index="index"
+	        separator=" " open="case project_id" close="end">
+	        when #{item.projectId} then #{item.ancestors}
+	    </foreach>
+	    where project_id in
+	    <foreach collection="projects" item="item" index="index"
+	        separator="," open="(" close=")">
+	        #{item.projectId}
+	    </foreach>
+	 </update>
+
+	<delete id="deleteProjectById" parameterType="Long">
+		update sys_project set del_flag = '2' where project_id = #{projectId}
+	</delete>
+	
+	<update id="updateProjectStatus" parameterType="SysProject">
+ 	    update sys_project
+ 	    <set>
+ 	        <if test="status != null and status != ''">status = #{status},</if>
+ 	        <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+ 	        update_time = sysdate()
+        </set>
+ 	    where project_id in (${ancestors})
+	</update>
+
+</mapper> 

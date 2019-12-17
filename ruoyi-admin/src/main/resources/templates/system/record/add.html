@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" >
+<head>
+    <th:block th:include="include :: header('新增方量记录')" />
+    <th:block th:include="include :: datetimepicker-css" />
+</head>
+<body class="white-bg">
+    <div class="wrapper wrapper-content animated fadeInRight ibox-content">
+        <form class="form-horizontal m" id="form-record-add">
+            <div class="form-group">    
+                <label class="col-sm-3 control-label">项目名：</label>
+                <div class="col-sm-8">
+                    <div class="input-group">
+                      	<input name="projectName" onclick="selectProjectTree()" id="treeName" type="text" placeholder="请选择归属项目" class="form-control" required>
+                        <span class="input-group-addon"><i class="fa fa-search"></i></span>
+				    </div>
+                </div>
+            </div>
+            <div class="form-group">    
+                <label class="col-sm-3 control-label">姓名：</label>
+                <div class="col-sm-8">
+	                <div class="input-group">
+	                    <input id="userName" name="userName" onclick="getUserList()" placeholder="请选择工人" class="form-control" type="text" required>
+	                    <span class="input-group-addon"><i class="fa fa-search"></i></span>
+	                </div>    
+                </div>
+            </div>
+            <div class="form-group">    
+                <label class="col-sm-3 control-label">方量公式：</label>
+                <div class="col-sm-8">
+                    <input name="expression" class="form-control" type="text" required>
+                </div>
+            </div>
+            <div class="form-group">    
+                <label class="col-sm-3 control-label">方量结果：</label>
+                <div class="col-sm-8">
+                    <input name="result" class="form-control" type="text" required>
+                </div>
+            </div>
+            <div class="form-group">    
+                <label class="col-sm-3 control-label">单价：</label>
+                <div class="col-sm-8">
+                    <input name="price" class="form-control" type="text" required>
+                </div>
+            </div>
+            <div class="form-group">    
+                <label class="col-sm-3 control-label">所得：</label>
+                <div class="col-sm-8">
+                    <input name="gains" class="form-control" type="text" required>
+                </div>
+            </div>
+            <div class="form-group">    
+                <label class="col-sm-3 control-label">状态：</label>
+                <div class="col-sm-8">
+                    <div class="radio-box" th:each="dict : ${@dict.getType('sys_record_status')}">
+                        <input type="radio" th:id="${'status_' + dict.dictCode}" name="status" th:value="${dict.dictValue}" th:checked="${dict.default}">
+                        <label th:for="${'status_' + dict.dictCode}" th:text="${dict.dictLabel}"></label>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">    
+                <label class="col-sm-3 control-label">删除标志：</label>
+                <div class="col-sm-8">
+                    <input name="delFlag" class="form-control" type="text">
+                </div>
+            </div>
+            <div class="form-group">    
+                <label class="col-sm-3 control-label">创建日期：</label>
+                <div class="col-sm-8">
+                    <div class="input-group date">
+                        <span class="input-group-addon"><i class="fa fa-calendar"></i></span>
+                        <input name="createdate" class="form-control" placeholder="yyyy-MM-dd" type="text">
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">    
+                <label class="col-sm-3 control-label">更新日期：</label>
+                <div class="col-sm-8">
+                    <div class="input-group date">
+                        <span class="input-group-addon"><i class="fa fa-calendar"></i></span>
+                        <input name="updatedate" class="form-control" placeholder="yyyy-MM-dd" type="text">
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    <th:block th:include="include :: footer" />
+    <th:block th:include="include :: datetimepicker-js" />
+    <script type="text/javascript">
+        var prefix = ctx + "system/record"
+        $("#form-record-add").validate({
+            focusCleanup: true
+        });
+
+        function submitHandler() {
+            if ($.validate.form()) {
+                $.operate.save(prefix + "/add", $('#form-record-add').serialize());
+            }
+        }
+
+        $("input[name='createdate']").datetimepicker({
+            format: "yyyy-mm-dd",
+            minView: "month",
+            autoclose: true
+        });
+
+        $("input[name='updatedate']").datetimepicker({
+            format: "yyyy-mm-dd",
+            minView: "month",
+            autoclose: true
+        });
+        /* 获取用户列表  */
+        function getUserList(){
+        	var url = ctx + "system/user/getUserList";
+			var options = {
+					title: '选择工人',
+					width: "770",
+					url: url,
+					callBack: doUserSubmit
+				};
+			$.modal.openOptions(options);
+        }
+        
+		function doUserSubmit(index,layero){debugger
+			var userName = window.localStorage.userName;
+        	console.log("userName:"+userName);
+		    $("#userName").val(userName);
+		    layer.close(index);
+		}
+        
+        /*选择项目树*/
+        function selectProjectTree() {
+        	var treeId = $("#treeId").val();
+        	var projectId = $.common.isEmpty(treeId) ? "100" : $("#treeId").val();
+        	var url = ctx + "system/project/selectProjectTree/" + projectId;
+			var options = {
+				title: '选择项目',
+				width: "380",
+				url: url,
+				callBack: doSubmit
+			};
+			$.modal.openOptions(options);
+		}
+		
+		function doSubmit(index, layero){
+			var tree = layero.find("iframe")[0].contentWindow.$._tree;
+			if ($.tree.notAllowParents(tree)) {
+				var body = layer.getChildFrame('body', index);
+    			$("#treeId").val(body.find('#treeId').val());
+    			$("#treeName").val(body.find('#treeName').val());
+    			layer.close(index);
+			}
+		}
+        
+    </script>
+</body>
+</html>
